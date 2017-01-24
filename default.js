@@ -2,13 +2,16 @@ window.addEventListener('load', () => {
   let $content = document.querySelector('#content');
   let $msg = document.querySelector('#msg');
   let $btn = document.querySelector('#btn');
-  let $workerBtn = document.querySelector('#workerBtn');
-  let worker = new SharedWorker('web-worker.js');
+  let $sharedWorkerBtn = document.querySelector('#sharedWorkerBtn');
+  let $taskBtn = document.querySelector('#taskBtn');
+  let $taskProgress = document.querySelector('#taskProgress');
+  let sharedWorker = new SharedWorker('web-worker.js');
+  let worker = new Worker('long-running-task.js');
 
-  worker.port.start();
+  sharedWorker.port.start();
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js', {
+  if ('servicesharedWorker' in navigator) {
+    navigator.servicesharedWorker.register('/service-worker.js', {
       scope: '/',
       origins: ['*']
     });
@@ -20,12 +23,21 @@ window.addEventListener('load', () => {
     new Promise(resolve => {
       let channel = new MessageChannel();
       channel.port1.addEventListener('message', event => resolve(event.data));
-      navigator.serviceWorker.controller.postMessage(msg, [channel.port2]);
+      navigator.servicesharedWorker.controller.postMessage(msg, [channel.port2]);
     });
   });
 
-  $workerBtn.addEventListener('click', () => {
-    worker.port.postMessage($msg.value);
+  $sharedWorkerBtn.addEventListener('click', () => {
+    sharedWorker.port.postMessage($msg.value);
+  });
+
+  $taskBtn.addEventListener('click', () => {
+    worker.postMessage('Start');
+    $taskProgress.innerHTML = 'Processing...';
+  });
+
+  worker.addEventListener('message', () => {
+    $taskProgress.innerHTML = 'Task complete';
   });
 
 });

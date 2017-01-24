@@ -1,13 +1,6 @@
 let ports = [];
 
-
-function longRunningTask() {
-  setTimeout(() => {
-    self.postMessage('Task complete');
-  }, 5000);
-}
-
-onconnect = event => {
+self.addEventListener('connect', event => {
   let port = event.ports[0];
   ports.push(port);
   port.addEventListener('message', event => {
@@ -16,4 +9,4 @@ onconnect = event => {
     });
   });
   port.start();
-}
+});
