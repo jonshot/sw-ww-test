@@ -1,11 +1,19 @@
-const version = 'v1_';
-self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(version + 'content').then((cache) => {
-    return cache.addAll([
-    ]);
-  }));
-});
+let ports = [];
 
-self.addEventListener('message', (msg) => {
-  
-});
+
+function longRunningTask() {
+  setTimeout(() => {
+    self.postMessage('Task complete');
+  }, 5000);
+}
+
+onconnect = event => {
+  let port = event.ports[0];
+  ports.push(port);
+  port.addEventListener('message', event => {
+    ports.forEach(port => {
+      port.postMessage(event.data)
+    });
+  });
+  port.start();
+}
