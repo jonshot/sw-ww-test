@@ -21,9 +21,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   let params = event.request.url.split('?');
   let serveJson = params.length > 1;
-  console.log(serveJson);
-  if(serveJson) {
-    console.log('Serving JSON');
+
+  if(serveJson && event.request.url.startsWith(event.request.referrer)) {
     event.respondWith(fetch(new Request('/response.json')));
     return;
   }
@@ -31,9 +30,16 @@ self.addEventListener('fetch', (event) => {
     caches
     .match(event.request)
     .then((response) => {
-      console.log('cached responses', response);
-      return response || fetch(new Request('/placeholder.png'));
+      console.log('cached response', response);
+      return response || fetch(new Request(event.request.url)).then((response) => {
+        return caches.open(CONTENT_CACHE).then((cache) => {
+          cache.put(event.request, response.clone());
+          return response;
+        });
+      });
     })
-    .catch(err => console.log('error retreiving cached object', err))
+    .catch(() => {
+      return caches.match('/placeholder.png');
+    })
   );
 });
